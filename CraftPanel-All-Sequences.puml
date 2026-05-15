@@ -1,0 +1,674 @@
+@startuml
+hide footbox
+skinparam ParticipantPadding 10
+skinparam BoxPadding 10
+!define error_bg FA8072
+!define success_bg LightGreen
+!define blue_bg e3fcff
+
+' ═══════════════════════════════════════════════════════════════════
+' DIAGRAM 1 — Login
+' ═══════════════════════════════════════════════════════════════════
+
+title CraftPanel — POST /api/auth/login
+
+actor "Admin" AS user #blue_bg
+
+box "Browser" #blue_bg
+boundary "React Frontend" AS fe #FFEEEE
+end box
+
+box "CraftPanel Backend (Node.js)" #dcf0ff
+entity "Express API" AS api #F5EEF8
+database "PostgreSQL" AS db #F5EEF8
+end box
+
+== Login ==
+
+user -> fe: Enter username + password, click Sign In
+activate fe
+
+fe -> api: POST /api/auth/login\n[Body] { username, password }
+activate api
+
+group #FFFFFF Validate Request
+    api -> api: Validate: username (non-empty), password (non-empty)
+    opt Missing fields
+        note right of api #error_bg
+            Hard Stop — Return **Status[400]**
+            - error.code = VAL_001
+            - error.message = "Invalid or missing parameters"
+        end note
+    end opt
+end group
+
+group #FFFFFF Verify Credentials
+    api -> db: SELECT id, username, password_hash, role\nFROM users WHERE username = $1
+    activate db
+    db --> api: user record or null
+    deactivate db
+
+    opt User not found
+        note right of api #error_bg
+            Hard Stop — Return **Status[401]**
+            - error.code = AUTH_001
+            - error.message = "Invalid username or password"
+        end note
+    end opt
+
+    api -> api: bcrypt.compare(password, user.password_hash)
+    opt Password does not match
+        note right of api #error_bg
+            Hard Stop — Return **Status[401]**
+            - error.code = AUTH_001
+            - error.message = "Invalid username or password"
+        end note
+    end opt
+end group
+
+group#Yellow ⭐ Issue Token & Load Access
+    api -> db: SELECT sg.id, sg.name\nFROM server_groups sg\nJOIN user_group_access uga ON sg.id = uga.group_id\nWHERE uga.user_id = $1
+    activate db
+    db --> api: assignedGroups[]
+    deactivate db
+
+    api -> api: jwt.sign({ userId, username, role, groupIds[] }, JWT_SECRET, { expiresIn: '8h' })
+
+    api -> db: INSERT INTO activity_log\n(user_id, action, created_at)\nVALUES ($1, 'logged_in', now())
+    activate db
+    db --> api: ok
+    deactivate db
+
+    note right of api #success_bg
+        Return **Status[200]**
+        {
+          token: "eyJ...",
+          user: { id, username, role },
+          groups: [{ id, name, servers[] }]
+        }
+    end note
+end group
+
+api --> fe: return response
+deactivate api
+
+fe -> fe: Store token in memory (Redux)\nStore groups in Redux serverSlice
+fe --> user: Redirect to Dashboard
+deactivate fe
+
+newpage
+
+' ═══════════════════════════════════════════════════════════════════
+' DIAGRAM 2 — GET File List
+' ═══════════════════════════════════════════════════════════════════
+
+title CraftPanel — GET /api/files (File Manager Directory Listing)
+
+actor "Admin" AS user #blue_bg
+
+box "Browser" #blue_bg
+boundary "React Frontend" AS fe #FFEEEE
+end box
+
+box "CraftPanel Backend (Node.js)" #dcf0ff
+entity "Express API" AS api #F5EEF8
+entity "File Manager" AS fm #F5EEF8
+database "PostgreSQL" AS db #F5EEF8
+end box
+
+== Browse Files ==
+
+user -> fe: Navigate to File Manager\nor click a folder in the browser
+activate fe
+
+fe -> api: GET /api/files?serverId=<uuid>&path=/plugins\n[Header] Authorization: Bearer <JWT>
+activate api
+
+group #FFFFFF Authenticate & Authorize
+    api -> api: Verify JWT signature and expiry
+    opt Invalid token
+        note right of api #error_bg
+            Hard Stop — Return **Status[401]**
+            - error.code = AUTH_001
+            - error.message = "Unauthorized"
+        end note
+    end opt
+
+    api -> db: Check user_group_access for serverId
+    activate db
+    db --> api: allowed / denied
+    deactivate db
+    opt No access
+        note right of api #error_bg
+            Hard Stop — Return **Status[403]**
+            - error.code = AUTH_002
+            - error.message = "Permission Denied"
+        end note
+    end opt
+end group
+
+group#Yellow ⭐ Business Logic — List Directory
+    group Resolve Safe Path
+        api -> db: SELECT dir_path FROM servers WHERE id = $1
+        activate db
+        db --> api: server.dir_path (e.g. /home/mc/server-1/main)
+        deactivate db
+
+        api -> fm: listDirectory(server.dir_path, requestedPath)
+        activate fm
+        fm -> fm: resolvedPath = path.resolve(server.dir_path, requestedPath)\nValidate: resolvedPath.startsWith(server.dir_path)
+        opt Path traversal attempt
+            note right of fm #error_bg
+                Hard Stop — Return **Status[403]**
+                - error.code = FILE_001
+                - error.message = "Path not allowed"
+            end note
+        end opt
+    end group
+
+    group Read Directory
+        fm -> fm: fs.readdirSync(resolvedPath, { withFileTypes: true })
+        opt Directory not found or read error
+            note right of fm #error_bg
+                Hard Stop — Return **Status[404]**
+                - error.code = FILE_003
+                - error.message = "Path not found"
+            end note
+        end opt
+
+        loop entry in dirEntries
+            note right of fm
+                files.push({
+                    name: entry.name,
+                    type: entry.isDirectory() ? 'dir' : 'file',
+                    size: entry.isFile() ? fs.statSync().size : null,
+                    modified: fs.statSync().mtime
+                })
+            end note
+        end loop
+
+        fm --> api: { files[] }
+        deactivate fm
+    end group
+
+    note right of api #success_bg
+        Return **Status[200]**
+        {
+          data: {
+            path: "/plugins",
+            files: [{ name, type, size, modified }]
+          }
+        }
+    end note
+end group
+
+api --> fe: return response
+deactivate api
+fe --> user: Render file/folder list in left panel
+deactivate fe
+
+newpage
+
+' ═══════════════════════════════════════════════════════════════════
+' DIAGRAM 3 — Save File
+' ═══════════════════════════════════════════════════════════════════
+
+title CraftPanel — PUT /api/files/content (Save File)
+
+actor "Admin" AS user #blue_bg
+
+box "Browser" #blue_bg
+boundary "React Frontend" AS fe #FFEEEE
+end box
+
+box "CraftPanel Backend (Node.js)" #dcf0ff
+entity "Express API" AS api #F5EEF8
+entity "File Manager" AS fm #F5EEF8
+database "PostgreSQL" AS db #F5EEF8
+end box
+
+== Save File ==
+
+user -> fe: Edit file in Monaco editor\nClick "Save File"
+activate fe
+
+fe -> fe: Show confirmation modal:\n"Save changes to /plugins/EssentialsX/config.yml\non SurvivalCraft?"
+
+user -> fe: Click "Confirm"
+
+fe -> api: PUT /api/files/content\n[Header] Authorization: Bearer <JWT>\n[Body] { serverId, path: "/plugins/EssentialsX/config.yml", content: "..." }
+activate api
+
+group #FFFFFF Authenticate & Authorize
+    api -> api: Verify JWT
+    api -> db: Check user_group_access for serverId
+    activate db
+    db --> api: allowed
+    deactivate db
+end group
+
+group#Yellow ⭐ Business Logic — Write File
+    api -> db: SELECT dir_path FROM servers WHERE id = $1
+    activate db
+    db --> api: server.dir_path
+    deactivate db
+
+    api -> fm: writeFile(server.dir_path, requestedPath, content)
+    activate fm
+
+    fm -> fm: resolvedPath = path.resolve(server.dir_path, requestedPath)\nValidate resolvedPath.startsWith(server.dir_path)
+    opt Path traversal
+        note right of fm #error_bg
+            Hard Stop — Return **Status[403]**
+            - error.code = FILE_001
+            - error.message = "Path not allowed"
+        end note
+    end opt
+
+    fm -> fm: Create backup: fs.copyFileSync(resolvedPath, resolvedPath + '.bak')
+    fm -> fm: fs.writeFileSync(resolvedPath, content, 'utf8')
+    opt Write fails
+        note right of fm #error_bg
+            Hard Stop — Return **Status[500]**
+            - error.code = FILE_002
+            - error.message = "File write failed"
+        end note
+    end opt
+
+    fm --> api: { success: true }
+    deactivate fm
+
+    group Log Activity
+        api -> db: INSERT INTO activity_log\n(user_id, server_id, action, detail, created_at)\nVALUES ($1, $2, 'edited_file', '/plugins/EssentialsX/config.yml', now())
+        activate db
+        db --> api: ok
+        deactivate db
+    end group
+
+    note right of api #success_bg
+        Return **Status[200]**
+        { data: { success: true, path: "/plugins/EssentialsX/config.yml" } }
+    end note
+end group
+
+api --> fe: return response
+deactivate api
+fe --> user: Show toast "File saved ✓"\nClear unsaved-changes dot on tab
+deactivate fe
+
+newpage
+
+' ═══════════════════════════════════════════════════════════════════
+' DIAGRAM 4 — Terminal Command
+' ═══════════════════════════════════════════════════════════════════
+
+title CraftPanel — WebSocket terminal:input (Terminal Command)
+
+actor "Admin" AS user #blue_bg
+
+box "Browser" #blue_bg
+boundary "React Frontend\n(xterm.js)" AS fe #FFEEEE
+end box
+
+box "CraftPanel Backend (Node.js)" #dcf0ff
+entity "socket.io Server" AS ws #F5EEF8
+entity "Terminal Manager\n(node-pty)" AS pty #F5EEF8
+database "PostgreSQL" AS db #F5EEF8
+end box
+
+box "Minecraft Server" #fff8e8
+entity "Bash Shell" AS shell #FFF3CD
+end box
+
+== Terminal: Connect ==
+
+user -> fe: Navigate to Terminal page
+activate fe
+fe -> ws: socket.emit('terminal:connect', { serverId })\n[Auth] JWT sent in socket handshake
+activate ws
+
+ws -> ws: Verify JWT from handshake\nCheck user_group_access for serverId
+ws -> db: SELECT dir_path, name FROM servers WHERE id = $1
+activate db
+db --> ws: server record
+deactivate db
+
+ws -> pty: spawnTerminal(serverId, server.dir_path)
+activate pty
+pty -> shell: spawn('bash', [], { cwd: server.dir_path, env: {...} })
+activate shell
+shell --> pty: pty handle
+pty --> ws: terminal ready
+ws --> fe: socket.emit('terminal:ready')
+
+== Terminal: Send Keystroke ==
+
+user -> fe: Types command, presses Enter
+fe -> fe: Check command against dangerous list\n(stop, restart, op, ban, rm -rf, ...)
+
+alt Command is NOT dangerous
+    fe -> ws: socket.emit('terminal:input', { serverId, data: 'tps\r' })
+    ws -> pty: pty.write(data)
+    pty -> shell: forward keystrokes
+    shell --> pty: output data
+    pty --> ws: onData callback
+    ws --> fe: socket.emit('terminal:output', { serverId, data: '...' })
+    fe --> user: xterm.js renders output
+
+    ws -> db: INSERT INTO activity_log\n(user_id, server_id, action, detail)\nVALUES ($1, $2, 'ran_command', 'tps')
+    activate db
+    db --> ws: ok
+    deactivate db
+
+else Command IS dangerous (e.g. "stop")
+    fe --> user: Show confirmation modal:\n"Run 'stop' on SurvivalCraft?\nThis will shut down the server."
+    user -> fe: Click "Run Anyway"
+    fe -> ws: socket.emit('terminal:input', { serverId, data: 'stop\r' })
+    ws -> pty: pty.write(data)
+    pty -> shell: forward
+    shell --> pty: output
+    pty --> ws: onData
+    ws --> fe: socket.emit('terminal:output', { serverId, data: '...' })
+    fe --> user: xterm.js renders output
+
+    ws -> db: INSERT INTO activity_log (action='ran_dangerous_command', detail='stop')
+    activate db
+    db --> ws: ok
+    deactivate db
+end alt
+
+== Terminal: Resize ==
+
+user -> fe: Resize browser window
+fe -> ws: socket.emit('terminal:resize', { serverId, cols: 120, rows: 40 })
+ws -> pty: pty.resize(cols, rows)
+pty -> shell: SIGWINCH
+
+== Terminal: Disconnect ==
+
+user -> fe: Navigate away from Terminal page
+fe -> ws: socket.disconnect()
+ws -> pty: killTerminal(serverId)
+pty -> shell: pty.kill()
+deactivate shell
+deactivate pty
+deactivate ws
+deactivate fe
+
+newpage
+
+' ═══════════════════════════════════════════════════════════════════
+' DIAGRAM 5 — AI Analyze + Apply
+' ═══════════════════════════════════════════════════════════════════
+
+title CraftPanel — POST /api/ai/analyze + /api/ai/apply (AI Diagnostics)
+
+actor "Admin" AS user #blue_bg
+
+box "Browser" #blue_bg
+boundary "React Frontend" AS fe #FFEEEE
+end box
+
+box "CraftPanel Backend (Node.js)" #dcf0ff
+entity "Express API" AS api #F5EEF8
+entity "AI Service" AS ai_svc #F5EEF8
+entity "File Manager" AS fm #F5EEF8
+entity "RCON Client" AS rcon #F5EEF8
+database "PostgreSQL" AS db #F5EEF8
+end box
+
+box "External Services" #fff8e8
+entity "Anthropic\nClaude API" AS claude #FFF3CD
+entity "Minecraft Server\n(RCON)" AS mc #FFF3CD
+end box
+
+== Analyze Error ==
+
+user -> fe: Clicks "→ AI" on ERROR log line\n(or pastes error text manually)
+activate fe
+
+fe -> api: POST /api/ai/analyze\n[Header] Authorization: Bearer <JWT>\n[Body] { serverId, errorText }
+activate api
+
+group #FFFFFF Authenticate & Authorize
+    api -> api: Verify JWT
+    api -> db: Check user_group_access for serverId
+    activate db
+    db --> api: allowed
+    deactivate db
+    api -> api: Validate: serverId (UUID), errorText (string, max 4000 chars)
+    opt Invalid
+        note right of api #error_bg
+            Hard Stop — Return **Status[400/401/403]**
+        end note
+    end opt
+end group
+
+group#Yellow ⭐ Business Logic — Analyze
+    api -> ai_svc: analyzeError(errorText)
+    activate ai_svc
+
+    note right of ai_svc
+        systemPrompt:
+        "You are a Minecraft Java server expert.
+        Respond ONLY with JSON:
+        {
+          explanation: string (plain English, max 3 sentences),
+          fixes: [{
+            title: string,
+            description: string,
+            steps: string[],
+            filesAffected: string[],
+            risk: 'low' | 'medium' | 'high'
+          }]
+        }
+        1–3 fixes, safest first."
+    end note
+
+    ai_svc -> claude: POST /v1/messages\nmodel: claude-sonnet-4-20250514\nmax_tokens: 1000\n[Body] { system, messages: [{ role: user, content: errorText }] }
+    activate claude
+    opt Timeout or API error
+        note right of ai_svc #error_bg
+            Hard Stop — Return **Status[502]**
+            - error.code = AI_001
+            - error.message = "AI service unavailable"
+        end note
+    end opt
+    claude --> ai_svc: { content: [{ type: text, text: "{ explanation, fixes[] }" }] }
+    deactivate claude
+
+    ai_svc -> ai_svc: JSON.parse(content[0].text)
+    opt Parse error
+        note right of ai_svc #error_bg
+            Hard Stop — Return **Status[500]**
+            - error.code = AI_002
+            - error.message = "Unexpected AI response"
+        end note
+    end opt
+
+    ai_svc --> api: { explanation, fixes[] }
+    deactivate ai_svc
+
+    api -> db: INSERT INTO activity_log (action='ai_analyzed', detail=errorText[0..100])
+    activate db
+    db --> api: ok
+    deactivate db
+
+    note right of api #success_bg
+        Return **Status[200]**
+        {
+          data: {
+            explanation: "Your server ran out of heap memory...",
+            fixes: [
+              { title, description, steps[], filesAffected[], risk: 'low' },
+              { title, description, steps[], filesAffected[], risk: 'medium' }
+            ]
+          }
+        }
+    end note
+end group
+
+api --> fe: return response
+deactivate api
+fe --> user: Show explanation card + fix option cards (1–3)
+deactivate fe
+
+|||
+
+== Apply Fix ==
+
+user -> fe: Select Fix 1 card\nClick "Apply Fix 1 →"
+activate fe
+fe --> user: Confirmation modal:\n"Apply: Increase JVM heap allocation\nto SurvivalCraft? Will modify start.sh"
+
+user -> fe: Click "Confirm"
+
+fe -> api: POST /api/ai/apply\n[Header] Authorization: Bearer <JWT>\n[Body] { serverId, fix: { title, steps, filesAffected, risk } }
+activate api
+
+group #FFFFFF Re-Authenticate
+    api -> api: Verify JWT
+    api -> db: Re-check server access
+    activate db
+    db --> api: allowed
+    deactivate db
+end group
+
+group#Yellow ⭐ Business Logic — Apply Fix
+    api -> api: Determine fix type from fix.filesAffected + fix.steps:\nfile_edit | rcon_command | both
+
+    api -> db: SELECT dir_path, rcon_port, rcon_password FROM servers WHERE id = $1
+    activate db
+    db --> api: server record
+    deactivate db
+
+    alt Fix type = file_edit
+        api -> fm: writeFile(server.dir_path, filePath, newContent)
+        activate fm
+        fm -> fm: Resolve + validate path safety
+        fm -> fm: Backup original file (.bak)
+        fm -> fm: fs.writeFileSync(resolvedPath, newContent)
+        opt Error
+            note right of fm #error_bg
+                Hard Stop — Return **Status[500]**
+                - error.code = FILE_002
+                - error.message = "File write failed"
+            end note
+        end opt
+        fm --> api: { success, changesSummary }
+        deactivate fm
+
+    else Fix type = rcon_command
+        api -> rcon: sendCommand(rcon_port, rcon_password, command)
+        activate rcon
+        rcon -> mc: RCON TCP → command
+        activate mc
+        mc --> rcon: command output
+        deactivate mc
+        opt RCON failed
+            note right of rcon #error_bg
+                Hard Stop — Return **Status[502]**
+                - error.code = RCON_001
+                - error.message = "Could not reach Minecraft server"
+            end note
+        end opt
+        rcon --> api: { success, output }
+        deactivate rcon
+    end alt
+
+    api -> db: INSERT INTO activity_log (action='ai_applied_fix', detail=fix.title)
+    activate db
+    db --> api: ok
+    deactivate db
+
+    note right of api #success_bg
+        Return **Status[200]**
+        {
+          data: {
+            success: true,
+            changesSummary: "Increased -Xmx from 2G to 4G in start.sh",
+            nextActions: ["reload_plugins", "restart_server"]
+          }
+        }
+    end note
+end group
+
+api --> fe: return response
+deactivate api
+fe --> user: Show "✓ Fix Applied" success card\n[Reload Plugins] [Restart Server] buttons
+deactivate fe
+
+newpage
+
+' ═══════════════════════════════════════════════════════════════════
+' DIAGRAM 6 — Live Log Streaming
+' ═══════════════════════════════════════════════════════════════════
+
+title CraftPanel — WebSocket subscribe:logs (Live Console Streaming)
+
+actor "Admin" AS user #blue_bg
+
+box "Browser" #blue_bg
+boundary "React Frontend" AS fe #FFEEEE
+end box
+
+box "CraftPanel Backend (Node.js)" #dcf0ff
+entity "socket.io Server" AS ws #F5EEF8
+entity "Log Watcher\n(chokidar)" AS watcher #F5EEF8
+database "PostgreSQL" AS db #F5EEF8
+end box
+
+box "Minecraft Server" #fff8e8
+entity "logs/latest.log" AS logfile #FFF3CD
+end box
+
+== Subscribe to Live Logs ==
+
+user -> fe: Open Dashboard or navigate to server
+activate fe
+
+fe -> ws: socket.emit('subscribe:logs', { serverId })\n[Auth] JWT in socket handshake
+activate ws
+
+ws -> ws: Verify JWT\nCheck user_group_access for serverId
+
+ws -> db: SELECT dir_path FROM servers WHERE id = $1
+activate db
+db --> ws: server.dir_path
+deactivate db
+
+ws -> watcher: startWatching(serverId, dir_path + '/logs/latest.log')
+activate watcher
+
+watcher -> logfile: Read last 200 lines (initial backfill)
+activate logfile
+logfile --> watcher: lines[]
+deactivate logfile
+
+watcher --> ws: emit initial lines
+ws --> fe: socket.emit('log:backfill', { serverId, lines[] })
+fe --> user: Render last 200 log lines\nColour-coded by level (INFO=blue, WARN=amber, ERROR=red)
+
+== Streaming New Lines ==
+
+loop Minecraft server writes new log lines
+    logfile -> watcher: chokidar 'change' event
+    watcher -> watcher: Read new lines since last position
+    watcher --> ws: newLines[]
+    ws --> fe: socket.emit('log:line', { serverId, time, level, msg })
+    fe --> user: Append line to console\nAuto-scroll if user is at bottom
+    opt level = ERROR or WARN
+        fe --> user: Show "→ AI" button on that line
+    end opt
+end loop
+
+== Unsubscribe ==
+
+user -> fe: Navigate away from Dashboard
+fe -> ws: socket.emit('unsubscribe:logs', { serverId })
+ws -> watcher: stopWatching(serverId)
+deactivate watcher
+deactivate ws
+deactivate fe
+
+@enduml

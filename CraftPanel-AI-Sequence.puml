@@ -1,0 +1,251 @@
+@startuml
+hide footbox
+
+title CraftPanel — POST /api/ai/analyze (AI Diagnostics Flow)
+
+skinparam ParticipantPadding 10
+skinparam BoxPadding 10
+!define green_bg 4BCE97
+!define blue_bg e3fcff
+!define orange_bg FEA363
+!define red_bg ffdce1
+!define green_tx ForestGreen
+!define blue_tx RoyalBlue
+!define orange_tx E56910
+!define red_tx AE2E24
+!define error_bg FA8072
+!define success_bg LightGreen
+
+actor "Admin" AS user #blue_bg
+
+box "Browser" #blue_bg
+boundary "React Frontend" AS fe #FFEEEE
+end box
+
+box "CraftPanel Backend (Node.js)" #dcf0ff
+entity "Express API" AS api #F5EEF8
+entity "AI Service" AS ai_svc #F5EEF8
+entity "File Manager" AS fm #F5EEF8
+entity "RCON Client" AS rcon #F5EEF8
+database "PostgreSQL" AS db #F5EEF8
+end box
+
+box "External" #fff8e8
+entity "Anthropic Claude API" AS claude #FFF3CD
+entity "Minecraft Server" AS mc #FFF3CD
+end box
+
+== AI Diagnostics: Analyze Error ==
+
+user -> fe: Clicks "→ AI" on a log error line\n(or pastes error manually)
+activate fe
+
+fe -> api: POST /api/ai/analyze\n[Header] Authorization: Bearer <JWT>\n[Body] { serverId, errorText }
+activate api
+
+group #FFFFFF Authenticate & Authorize
+    group Verify JWT
+        api -> api: Verify JWT signature and expiry
+        opt Invalid or expired token
+            note right of api #error_bg
+                Hard Stop — Return **Status[401]**
+                - error.code = AUTH_001
+                - error.message = "Unauthorized"
+            end note
+        end opt
+    end group
+
+    group Check Server Access
+        api -> db: SELECT user_group_access WHERE\nuser_id = claims.userId\nAND group includes serverId
+        activate db
+        db --> api: access record
+        deactivate db
+        opt User does not have access to this server
+            note right of api #error_bg
+                Hard Stop — Return **Status[403]**
+                - error.code = AUTH_002
+                - error.message = "Permission Denied"
+            end note
+        end opt
+    end group
+
+    group Validate Request Body
+        api -> api: Validate: serverId (UUID), errorText (non-empty string, max 4000 chars)
+        opt Invalid or missing fields
+            note right of api #error_bg
+                Hard Stop — Return **Status[400]**
+                - error.code = VAL_001
+                - error.message = "Invalid or missing parameters"
+            end note
+        end opt
+    end group
+end group
+
+|||
+
+group#Yellow ⭐ Business Logic — Analyze Error
+    group Build Claude Prompt
+        api -> ai_svc: analyzeError(errorText, serverContext)
+        activate ai_svc
+        note right of ai_svc
+            systemPrompt = "You are a Minecraft Java server expert.
+            Respond ONLY with JSON in this format:
+            {
+              explanation: string (max 3 sentences, plain English),
+              fixes: [{
+                title: string,
+                description: string,
+                steps: string[],
+                filesAffected: string[],
+                risk: 'low' | 'medium' | 'high'
+              }]
+            }
+            Provide 1-3 fixes, safest first."
+        end note
+    end group
+
+    group Call Claude API
+        ai_svc -> claude: POST /v1/messages\nmodel: claude-sonnet-4-20250514\n[Body] { system: systemPrompt, messages: [{ role: user, content: errorText }] }
+        activate claude
+        opt API error or timeout
+            note right of ai_svc #error_bg
+                Hard Stop — Return **Status[502]**
+                - error.code = AI_001
+                - error.message = "AI service unavailable"
+            end note
+        end opt
+        claude --> ai_svc: { content: [{ type: text, text: "{ explanation, fixes }" }] }
+        deactivate claude
+    end group
+
+    group Parse and Validate Response
+        ai_svc -> ai_svc: JSON.parse(content[0].text)
+        opt Parse fails or missing fields
+            note right of ai_svc #error_bg
+                Hard Stop — Return **Status[500]**
+                - error.code = AI_002
+                - error.message = "Unexpected AI response format"
+            end note
+        end opt
+        ai_svc --> api: { explanation, fixes[] }
+        deactivate ai_svc
+    end group
+
+    group Log Activity
+        api -> db: INSERT INTO activity_log\n(user_id, server_id, action, detail, created_at)\nVALUES (claims.userId, serverId, 'ai_analyzed', errorText[0..100], now())
+        activate db
+        db --> api: ok
+        deactivate db
+    end group
+
+    note right of api #success_bg
+        Return **Status[200]**
+        {
+          data: {
+            explanation: "...",
+            fixes: [{ title, description, steps, filesAffected, risk }]
+          }
+        }
+    end note
+end group
+
+api --> fe: return response
+deactivate api
+
+fe --> user: Show explanation card + fix option cards (1–3)
+deactivate fe
+
+|||
+== AI Diagnostics: Apply Fix ==
+
+user -> fe: Selects Fix 1 and clicks "Apply Fix →"
+activate fe
+
+fe -> api: POST /api/ai/apply\n[Header] Authorization: Bearer <JWT>\n[Body] { serverId, fix: { title, steps, filesAffected, risk } }
+activate api
+
+group #FFFFFF Re-authenticate
+    api -> api: Verify JWT (same as above)
+    api -> db: Re-check server access
+    activate db
+    db --> api: ok
+    deactivate db
+end group
+
+|||
+
+group#Yellow ⭐ Business Logic — Apply Fix
+    group Determine Fix Type
+        api -> api: Inspect fix.filesAffected and fix.steps\nto determine: file_edit | rcon_command | both
+    end group
+
+    alt Fix type = file_edit
+        group Write File
+            api -> fm: writeFile(serverDirPath, filePath, newContent)
+            activate fm
+            fm -> fm: Validate path stays within serverDirPath\n(no path traversal)
+            opt Path traversal detected
+                note right of fm #error_bg
+                    Hard Stop — Return **Status[403]**
+                    - error.code = FILE_001
+                    - error.message = "Path not allowed"
+                end note
+            end opt
+            fm -> fm: fs.writeFileSync(resolvedPath, newContent, 'utf8')
+            opt Write fails
+                note right of fm #error_bg
+                    Hard Stop — Return **Status[500]**
+                    - error.code = FILE_002
+                    - error.message = "File write failed"
+                end note
+            end opt
+            fm --> api: { success, changesSummary }
+            deactivate fm
+        end group
+
+    else Fix type = rcon_command
+        group Send RCON Command
+            api -> rcon: sendCommand(server.rconPort, server.rconPassword, command)
+            activate rcon
+            rcon -> mc: RCON TCP connection + command
+            activate mc
+            mc --> rcon: response
+            deactivate mc
+            opt RCON connection failed
+                note right of rcon #error_bg
+                    Hard Stop — Return **Status[502]**
+                    - error.code = RCON_001
+                    - error.message = "Could not reach Minecraft server"
+                end note
+            end opt
+            rcon --> api: { success, output }
+            deactivate rcon
+        end group
+    end alt
+
+    group Log Activity
+        api -> db: INSERT INTO activity_log\n(user_id, server_id, action, detail, created_at)\nVALUES (claims.userId, serverId, 'ai_applied_fix', fix.title, now())
+        activate db
+        db --> api: ok
+        deactivate db
+    end group
+
+    note right of api #success_bg
+        Return **Status[200]**
+        {
+          data: {
+            success: true,
+            changesSummary: "Increased -Xmx from 2G to 4G in start.sh",
+            nextActions: ["reload_plugins", "restart_server"]
+          }
+        }
+    end note
+end group
+
+api --> fe: return response
+deactivate api
+
+fe --> user: Show "✓ Fix Applied" card\nwith [Reload Plugins] [Restart Server] buttons
+deactivate fe
+
+@enduml

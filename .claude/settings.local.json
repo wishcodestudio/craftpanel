@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(docker compose *)",
+      "Read(//usr/local/bin/**)",
+      "Read(//mnt/c/Program Files/Docker/Docker/resources/bin/**)",
+      "PowerShell(Get-Command *)"
+    ]
+  }
+}
