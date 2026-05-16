@@ -117,6 +117,9 @@ export default function Dashboard({ serverId, socket, stats, onSendToAI }) {
                 {(l.level === 'ERROR' || l.level === 'WARN') && (
                   <button className="send-ai-btn" onClick={() => onSendToAI(l.msg)}>→ AI</button>
                 )}
+                {l.level === 'INFO' && (
+                  <button className="send-ai-btn-info" onClick={() => onSendToAI(l.msg)}>? AI</button>
+                )}
               </div>
             ))}
           </div>

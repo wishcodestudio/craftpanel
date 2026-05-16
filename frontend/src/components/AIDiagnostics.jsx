@@ -65,6 +65,15 @@ function ResultRow({ r }) {
   );
 }
 
+const PROVIDERS = [
+  { id: 'auto',      label: 'Auto' },
+  { id: 'anthropic', label: 'Claude' },
+  { id: 'gemini',    label: 'Gemini' },
+  { id: 'openai',    label: 'OpenAI' },
+];
+
+const PROVIDER_LABELS = { anthropic: 'Claude', gemini: 'Gemini', openai: 'OpenAI', auto: 'Auto' };
+
 export default function AIDiagnostics({ serverId, prefillText, historyResult, serverName }) {
   const [input,        setInput]        = useState(prefillText || '');
   const [thinking,     setThinking]     = useState(false);
@@ -73,6 +82,12 @@ export default function AIDiagnostics({ serverId, prefillText, historyResult, se
   const [applyModal,   setApplyModal]   = useState(null);
   const [applyLoading, setApplyLoading] = useState(false);
   const [applyResults, setApplyResults] = useState(null);
+  const [provider,     setProvider]     = useState(() => localStorage.getItem('cp_ai_provider') || 'auto');
+
+  const selectProvider = (p) => {
+    setProvider(p);
+    localStorage.setItem('cp_ai_provider', p);
+  };
 
   useEffect(() => {
     if (prefillText !== undefined) {
@@ -94,7 +109,11 @@ export default function AIDiagnostics({ serverId, prefillText, historyResult, se
     setSelected(null);
     setApplyResults(null);
     try {
-      const r = await api.post('/ai/analyze', { serverId, errorText: input });
+      const r = await api.post('/ai/analyze', {
+        serverId,
+        errorText: input,
+        ...(provider !== 'auto' && { provider }),
+      });
       setResult(r.data.data);
     } catch (e) {
       setResult({
@@ -169,10 +188,24 @@ export default function AIDiagnostics({ serverId, prefillText, historyResult, se
         <div className="ai-panel">
           <div className="panel-header">
             <span className="panel-title">Error / Problem</span>
-            <span style={{ fontSize: 11, color: 'var(--accent)' }}>
-              {result?.provider === 'gemini' ? '⬡ Gemini' : result?.provider === 'openai' ? '⬡ OpenAI' : '⬡ Claude'}
-            </span>
+            <div className="provider-selector">
+              {PROVIDERS.map(p => (
+                <button
+                  key={p.id}
+                  className={`provider-btn ${provider === p.id ? 'active' : ''}`}
+                  onClick={() => selectProvider(p.id)}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
           </div>
+          {result && result.requestedProvider && result.requestedProvider !== 'auto' &&
+           result.provider !== result.requestedProvider && (
+            <div className="provider-fallback-notice">
+              ⚡ {PROVIDER_LABELS[result.requestedProvider]} unavailable — used {PROVIDER_LABELS[result.provider]} instead
+            </div>
+          )}
           <div className="ai-input-area">
             <textarea
               className="ai-textarea"
@@ -210,12 +243,19 @@ export default function AIDiagnostics({ serverId, prefillText, historyResult, se
         <div className="ai-panel">
           <div className="panel-header">
             <span className="panel-title">AI Suggestions</span>
-            {historyResult && result === historyResult && (
-              <span style={{ fontSize: 11, background: 'rgba(96,165,250,0.1)', color: '#60a5fa', 
-                             padding: '2px 8px', borderRadius: 4, fontWeight: 600 }}>
-                HISTORY
-              </span>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              {result?.provider && (
+                <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 600 }}>
+                  ⬡ {PROVIDER_LABELS[result.provider] || result.provider}
+                </span>
+              )}
+              {historyResult && result === historyResult && (
+                <span style={{ fontSize: 11, background: 'rgba(96,165,250,0.1)', color: '#60a5fa',
+                               padding: '2px 8px', borderRadius: 4, fontWeight: 600 }}>
+                  HISTORY
+                </span>
+              )}
+            </div>
           </div>
 
           {thinking && (

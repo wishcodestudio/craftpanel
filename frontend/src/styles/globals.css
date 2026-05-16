@@ -113,6 +113,8 @@ body { font-family: 'Syne', sans-serif; background: var(--bg0); color: var(--tex
 .log-msg.warn { color: var(--amber); }
 .send-ai-btn { background: rgba(124,106,247,0.1); border: 1px solid rgba(124,106,247,0.25); border-radius: 4px; padding: 2px 8px; font-size: 10px; color: var(--accent); cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 600; flex-shrink: 0; transition: all .15s; }
 .send-ai-btn:hover { background: rgba(124,106,247,0.2); }
+.send-ai-btn-info { background: rgba(148,163,184,0.08); border: 1px dashed rgba(148,163,184,0.3); border-radius: 4px; padding: 2px 8px; font-size: 10px; color: var(--text3); cursor: pointer; font-family: 'Syne', sans-serif; font-weight: 600; flex-shrink: 0; transition: all .15s; }
+.send-ai-btn-info:hover { background: rgba(148,163,184,0.15); color: var(--text2); border-color: rgba(148,163,184,0.5); }
 
 /* Activity */
 .activity-item { display: flex; align-items: center; gap: 12px; padding: 11px 18px; border-bottom: 1px solid var(--border); }
@@ -151,6 +153,11 @@ body { font-family: 'Syne', sans-serif; background: var(--bg0); color: var(--tex
 .discard-btn:hover { border-color: var(--red); color: var(--red); }
 
 /* AI Diagnostics */
+.provider-selector { display: flex; gap: 3px; }
+.provider-btn { background: transparent; border: 1px solid var(--border); border-radius: 5px; padding: 3px 9px; font-size: 10px; font-family: 'Syne', sans-serif; font-weight: 600; color: var(--text3); cursor: pointer; transition: all .15s; letter-spacing: 0.5px; }
+.provider-btn:hover { border-color: var(--border2); color: var(--text2); }
+.provider-btn.active { background: rgba(124,106,247,0.15); border-color: rgba(124,106,247,0.4); color: var(--accent); }
+.provider-fallback-notice { margin: 0 16px 8px; padding: 7px 12px; background: rgba(251,191,36,0.07); border: 1px solid rgba(251,191,36,0.2); border-radius: 7px; font-size: 11px; color: var(--amber); }
 .ai-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .ai-panel { background: var(--bg1); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
 .ai-input-area { padding: 16px; }

@@ -119,7 +119,7 @@ function execFile(dirPath, action) {
 // ── Routes ───────────────────────────────────────────────────────────────────
 
 router.post('/analyze', async (req, res) => {
-  const { serverId, errorText } = req.body || {};
+  const { serverId, errorText, provider } = req.body || {};
   if (!serverId || !errorText?.trim()) {
     return res.status(400).json({ error: { code: 'VAL_001', message: 'serverId and errorText required' } });
   }
@@ -138,7 +138,7 @@ router.post('/analyze', async (req, res) => {
       server_status: serverStatus,
       rcon_enabled: rconEnabled,
       server_version: sv.version
-    });
+    }, sv.dir_path, provider || null);
     
     // Save full result to activity log for later retrieval
     await db.query(
