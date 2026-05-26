@@ -1,0 +1,46 @@
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 1rem;
+}
+.modal {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: var(--radius); width: 100%; max-width: 480px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border);
+}
+.header h2 { font-size: 1rem; font-weight: 600; }
+.close {
+  color: var(--text3); width: 28px; height: 28px;
+  border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;
+}
+.close:hover { background: var(--bg4); color: var(--text1); }
+.form {
+  padding: 1.25rem 1.5rem;
+  display: flex; flex-direction: column; gap: 0.875rem;
+}
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+label {
+  display: flex; flex-direction: column; gap: 0.35rem;
+  font-size: 0.8rem; color: var(--text2); font-weight: 500;
+}
+.hint { font-size: 0.7rem; color: var(--text3); font-style: italic; }
+.groups { display: flex; flex-direction: column; gap: 0.4rem; }
+.groupLabel { font-size: 0.8rem; color: var(--text2); font-weight: 500; }
+.groupList { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.checkboxLabel {
+  display: flex; flex-direction: row; align-items: center;
+  gap: 0.4rem; font-size: 0.8rem; color: var(--text1); cursor: pointer;
+  background: var(--bg3); padding: 0.3rem 0.6rem; border-radius: var(--radius-sm);
+}
+.checkboxLabel input { width: auto; }
+.actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25rem; }
+.cancelBtn { padding: 0.5rem 1rem; border-radius: var(--radius-sm); color: var(--text2); background: var(--bg3); font-size: 0.875rem; }
+.cancelBtn:hover { background: var(--bg4); }
+.submitBtn { padding: 0.5rem 1.25rem; border-radius: var(--radius-sm); background: var(--accent); color: #fff; font-size: 0.875rem; font-weight: 600; }
+.submitBtn:hover:not(:disabled) { background: var(--accent-hover); }
+.submitBtn:disabled { opacity: 0.6; cursor: not-allowed; }

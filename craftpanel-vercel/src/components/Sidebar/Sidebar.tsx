@@ -3,13 +3,15 @@ import { useDispatch } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
 import { toggleSidebar } from '../../store/slices/uiSlice';
 import { useAppSelector } from '../../store/hooks';
-import { selectCurrentUser, selectSidebarOpen } from '../../store/selectors';
+import { selectCurrentUser, selectSidebarOpen, selectServerStats } from '../../store/selectors';
 import styles from './Sidebar.module.css';
 
 const NAV = [
-  { to: '/dashboard', label: 'Dashboard', icon: '[D]' },
-  { to: '/servers',   label: 'Servers',   icon: '[S]' },
-  { to: '/activity',  label: 'Activity',  icon: '[A]' },
+  { to: '/dashboard', label: 'Dashboard', tag: '[D]' },
+  { to: '/servers',   label: 'Servers',   tag: '[S]' },
+  { to: '/activity',  label: 'Activity',  tag: '[A]' },
+  { to: '/ai',        label: 'AI Assist', tag: '[AI]' },
+  { to: '/users',     label: 'Users',     tag: '[U]' },
 ] as const;
 
 export default function Sidebar() {
@@ -17,6 +19,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const user = useAppSelector(selectCurrentUser);
   const open = useAppSelector(selectSidebarOpen);
+  const stats = useAppSelector(selectServerStats);
 
   return (
     <aside className={`${styles.sidebar} ${open ? styles.open : styles.closed}`}>
@@ -27,15 +30,22 @@ export default function Sidebar() {
         </button>
       </div>
 
+      {open && (
+        <div className={styles.statsRow}>
+          <span className={styles.onlineDot} />
+          <span className={styles.statsText}>{stats.online}/{stats.total} online · {stats.totalPlayers} players</span>
+        </div>
+      )}
+
       <nav className={styles.nav}>
-        {NAV.map(({ to, label, icon }) => (
+        {NAV.map(({ to, label, tag }) => (
           <NavLink
             key={to}
             to={to}
-            className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
+            className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''} ${to === '/ai' ? styles.aiItem : ''}`}
             title={open ? undefined : label}
           >
-            <span className={styles.icon}>{icon}</span>
+            <span className={styles.icon}>{tag}</span>
             {open && <span>{label}</span>}
           </NavLink>
         ))}

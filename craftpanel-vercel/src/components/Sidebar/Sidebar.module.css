@@ -59,14 +59,34 @@
 .navItem.active { background: var(--bg3); color: var(--accent); font-weight: 600; }
 
 .icon {
-  font-size: 0.8rem;
-  width: 20px;
+  font-size: 0.7rem;
+  width: 28px;
   text-align: center;
   flex-shrink: 0;
   font-family: 'JetBrains Mono', monospace;
   color: var(--text3);
 }
 .navItem.active .icon { color: var(--accent); }
+
+.aiItem { border: 1px solid rgba(167,139,250,0.2); margin-top: 2px; }
+.aiItem.active, .aiItem:hover { background: rgba(167,139,250,0.1) !important; border-color: rgba(167,139,250,0.4); }
+.aiItem.active { color: var(--purple) !important; }
+.aiItem.active .icon { color: var(--purple); }
+
+.statsRow {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.7rem; color: var(--text3);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+.onlineDot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green); flex-shrink: 0;
+  animation: blink 2s ease-in-out infinite;
+}
+.statsText { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
 .footer {
   padding: 0.75rem 0.5rem;

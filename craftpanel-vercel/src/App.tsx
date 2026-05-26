@@ -8,6 +8,8 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import Servers from './pages/Servers/Servers';
 import ServerDetail from './pages/ServerDetail/ServerDetail';
 import Activity from './pages/Activity/Activity';
+import AI from './pages/AI/AI';
+import Users from './pages/Users/Users';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const auth = useAppSelector(selectIsAuthenticated);
@@ -33,6 +35,8 @@ export default function App() {
           <Route path="servers" element={<Servers />} />
           <Route path="servers/:id" element={<ServerDetail />} />
           <Route path="activity" element={<Activity />} />
+          <Route path="ai" element={<AI />} />
+          <Route path="users" element={<Users />} />
         </Route>
       </Routes>
     </BrowserRouter>

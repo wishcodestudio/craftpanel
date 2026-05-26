@@ -1,4 +1,4 @@
-import type { Server, ServerGroup, ActivityEntry, FileEntry } from '../types';
+import type { Server, ServerGroup, ActivityEntry, FileEntry, Player, Backup, AppUser } from '../types';
 
 export const mockGroups: ServerGroup[] = [
   { id: 'g1', name: 'Production' },
@@ -56,6 +56,35 @@ export const mockActivity: ActivityEntry[] = [
   },
 ];
 
+export const mockPlayers: Record<string, Player[]> = {
+  s1: [
+    { username: 'Steve', uuid: '069a79f4-44e9-4726-a5be-fca90e38aaf5', joinedAt: '2024-05-26T07:30:00Z', ip: '10.0.0.5', ping: 42, gamemode: 'survival' },
+    { username: 'Alex', uuid: '8667ba71-b85a-4004-af54-457a9734eed7', joinedAt: '2024-05-26T07:45:00Z', ip: '10.0.0.6', ping: 18, gamemode: 'survival' },
+    { username: 'Notch', uuid: '069a79f4-44e9-4726-a5be-fca90e38aa11', joinedAt: '2024-05-26T08:00:00Z', ip: '10.0.0.7', ping: 5, gamemode: 'creative' },
+  ],
+  s2: [
+    { username: 'Herobrine', uuid: 'f84c6a84-0f5d-4b6e-9b8d-1a2b3c4d5e6f', joinedAt: '2024-05-26T07:55:00Z', ip: '10.0.0.8', ping: 31, gamemode: 'creative' },
+    { username: 'CraftMaster', uuid: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', joinedAt: '2024-05-26T08:10:00Z', ip: '10.0.0.9', ping: 24, gamemode: 'creative' },
+  ],
+};
+
+export const mockBackups: Record<string, Backup[]> = {
+  s1: [
+    { id: 'b1', serverId: 's1', name: 'auto-2024-05-26-07-00', size: '1.2 GB', createdAt: '2024-05-26T07:00:00Z', status: 'complete' },
+    { id: 'b2', serverId: 's1', name: 'auto-2024-05-25-07-00', size: '1.1 GB', createdAt: '2024-05-25T07:00:00Z', status: 'complete' },
+    { id: 'b3', serverId: 's1', name: 'manual-before-update', size: '1.0 GB', createdAt: '2024-05-24T15:30:00Z', status: 'complete' },
+  ],
+  s2: [
+    { id: 'b4', serverId: 's2', name: 'auto-2024-05-26-07-00', size: '512 MB', createdAt: '2024-05-26T07:00:00Z', status: 'complete' },
+  ],
+};
+
+export const mockUsers: AppUser[] = [
+  { id: 'u1', username: 'admin', name: 'Administrator', role: 'admin', createdAt: '2024-01-01T00:00:00Z', groupIds: ['g1', 'g2', 'g3'] },
+  { id: 'u2', username: 'operator1', name: 'Operator One', role: 'operator', createdAt: '2024-01-10T00:00:00Z', groupIds: ['g1'] },
+  { id: 'u3', username: 'devuser', name: 'Dev User', role: 'operator', createdAt: '2024-02-05T00:00:00Z', groupIds: ['g2'] },
+];
+
 export const mockFiles: Record<string, FileEntry[]> = {
   s1: [
     { name: 'server.properties', path: 'server.properties', type: 'file', size: 1024, modified: '2024-05-26T07:05:00Z' },
@@ -63,6 +92,7 @@ export const mockFiles: Record<string, FileEntry[]> = {
     { name: 'plugins', path: 'plugins', type: 'directory', size: 0, modified: '2024-05-26T07:00:00Z' },
     { name: 'world', path: 'world', type: 'directory', size: 0, modified: '2024-05-26T08:00:00Z' },
     { name: 'eula.txt', path: 'eula.txt', type: 'file', size: 128, modified: '2024-01-15T08:00:00Z' },
+    { name: 'whitelist.json', path: 'whitelist.json', type: 'file', size: 64, modified: '2024-05-10T10:00:00Z' },
   ],
   s2: [
     { name: 'server.properties', path: 'server.properties', type: 'file', size: 1024, modified: '2024-05-26T07:00:00Z' },
@@ -87,6 +117,9 @@ difficulty=normal
 pvp=true
 spawn-protection=16
 view-distance=10
+simulation-distance=10
+max-tick-time=60000
+network-compression-threshold=256
 `,
   'ops.json': `[
   {
@@ -99,4 +132,17 @@ view-distance=10
   'eula.txt': `#By changing the setting below to TRUE you are indicating your agreement to our EULA.
 #https://aka.ms/MinecraftEULA
 eula=true`,
+  'whitelist.json': `[
+  {
+    "uuid": "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+    "name": "Notch"
+  },
+  {
+    "uuid": "8667ba71-b85a-4004-af54-457a9734eed7",
+    "name": "Alex"
+  }
+]`,
 };
+
+// Mutable content store so writes persist within session
+export const fileContentStore: Record<string, string> = { ...mockFileContents };

@@ -1,6 +1,9 @@
 export type ServerStatus = 'online' | 'offline' | 'starting' | 'stopping';
 export type UserRole = 'admin' | 'operator';
 export type FileType = 'file' | 'directory';
+export type AISeverity = 'low' | 'medium' | 'high' | 'critical';
+export type BackupStatus = 'complete' | 'in_progress' | 'failed';
+export type GameMode = 'survival' | 'creative' | 'adventure' | 'spectator';
 
 export interface Server {
   id: string;
@@ -15,6 +18,16 @@ export interface Server {
   maxPlayers: number;
   ram: string;
   createdAt: string;
+}
+
+export interface ServerStats {
+  serverId: string;
+  cpu: number;
+  ramUsed: number;
+  ramTotal: number;
+  tps: number;
+  uptime: number;
+  timestamp: string;
 }
 
 export interface ServerGroup {
@@ -46,11 +59,34 @@ export interface FileContent {
   content: string;
 }
 
+export interface Player {
+  username: string;
+  uuid: string;
+  joinedAt: string;
+  ip: string;
+  ping: number;
+  gamemode: GameMode;
+}
+
+export interface Backup {
+  id: string;
+  serverId: string;
+  name: string;
+  size: string;
+  createdAt: string;
+  status: BackupStatus;
+}
+
 export interface User {
   id: string;
   username: string;
   name: string;
   role: UserRole;
+}
+
+export interface AppUser extends User {
+  createdAt: string;
+  groupIds: string[];
 }
 
 export interface LoginCredentials {
@@ -75,3 +111,40 @@ export interface CreateServerPayload {
 }
 
 export type UpdateServerPayload = Partial<CreateServerPayload> & { id: string };
+
+export interface CreateUserPayload {
+  username: string;
+  name: string;
+  password: string;
+  role: UserRole;
+  groupIds: string[];
+}
+
+export type UpdateUserPayload = Partial<Omit<CreateUserPayload, 'password'>> & {
+  id: string;
+  password?: string;
+};
+
+export interface AIFix {
+  type: 'jvm' | 'config' | 'plugin' | 'rcon' | 'file' | 'system';
+  description: string;
+  action?: string;
+  file?: string;
+  key?: string;
+  value?: string;
+}
+
+export interface AIAnalysis {
+  summary: string;
+  severity: AISeverity;
+  rootCause: string;
+  fixes: AIFix[];
+  prevention: string;
+  confidence: number;
+}
+
+export interface ConsoleCommandResult {
+  command: string;
+  output: string;
+  timestamp: string;
+}

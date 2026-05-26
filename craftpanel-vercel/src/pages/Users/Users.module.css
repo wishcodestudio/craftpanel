@@ -1,0 +1,75 @@
+.page { display: flex; flex-direction: column; gap: 1.5rem; max-width: 1100px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; }
+.heading { font-size: 1.4rem; font-weight: 700; }
+.addBtn {
+  background: var(--accent); color: #fff; padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 600;
+}
+.addBtn:hover { background: var(--accent-hover); }
+.tableWrap {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.table { width: 100%; border-collapse: collapse; }
+.table thead tr { border-bottom: 1px solid var(--border2); }
+.table th {
+  padding: 0.75rem 1rem; text-align: left;
+  font-size: 0.75rem; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+.row { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+.row:last-child { border-bottom: none; }
+.row:hover { background: var(--bg2); }
+.table td { padding: 0.8rem 1rem; font-size: 0.875rem; }
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem !important; color: var(--text2); }
+
+.roleBadge {
+  display: inline-block; padding: 2px 8px; border-radius: 12px;
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+}
+.admin    { background: rgba(167,139,250,0.15); color: var(--purple); }
+.operator { background: rgba(96,165,250,0.12);  color: var(--blue); }
+
+.groups { display: flex; flex-wrap: wrap; gap: 4px; }
+.groupTag {
+  background: var(--bg3); color: var(--text2);
+  padding: 1px 7px; border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+}
+.noGroup { font-size: 0.75rem; color: var(--text3); }
+
+.actions { display: flex; gap: 0.4rem; }
+.editBtn {
+  padding: 0.3rem 0.65rem; border-radius: var(--radius-sm);
+  font-size: 0.75rem; background: var(--bg3); color: var(--text1);
+}
+.editBtn:hover { background: var(--bg4); }
+.deleteBtn {
+  padding: 0.3rem 0.65rem; border-radius: var(--radius-sm);
+  font-size: 0.75rem; background: rgba(248,113,113,0.1); color: var(--red);
+}
+.deleteBtn:hover:not(:disabled) { background: rgba(248,113,113,0.2); }
+.deleteBtn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.empty { padding: 2.5rem; text-align: center; color: var(--text3); font-size: 0.875rem; }
+.loading { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding: 4rem; color: var(--text2); }
+.spinner {
+  width: 32px; height: 32px; border: 3px solid var(--bg4);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.error { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); border-radius: var(--radius); color: var(--red); padding: 1rem 1.25rem; }
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.confirmBox {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: var(--radius); padding: 1.5rem; max-width: 380px; width: 90%;
+  display: flex; flex-direction: column; gap: 1rem;
+}
+.confirmBox h3 { font-size: 1rem; font-weight: 600; }
+.confirmBox p { font-size: 0.875rem; color: var(--text2); }
+.confirmActions { display: flex; justify-content: flex-end; gap: 0.5rem; }
+.cancelBtn { padding: 0.45rem 0.9rem; border-radius: var(--radius-sm); background: var(--bg3); color: var(--text1); font-size: 0.875rem; }
+.cancelBtn:hover { background: var(--bg4); }
+.confirmDeleteBtn { padding: 0.45rem 0.9rem; border-radius: var(--radius-sm); background: var(--red); color: #fff; font-size: 0.875rem; font-weight: 600; }
+.confirmDeleteBtn:hover { opacity: 0.85; }
+@keyframes spin { to { transform: rotate(360deg); } }
