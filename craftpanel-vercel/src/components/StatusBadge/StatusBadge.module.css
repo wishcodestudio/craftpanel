@@ -1,0 +1,25 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.online   { color: var(--green);  background: rgba(74,222,128,0.12); }
+.offline  { color: var(--text3);  background: rgba(90,100,128,0.15); }
+.starting { color: var(--amber);  background: rgba(251,191,36,0.12); }
+.stopping { color: var(--red);    background: rgba(248,113,113,0.12); }

@@ -1,0 +1,110 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg1);
+  border-right: 1px solid var(--border);
+  transition: width 0.2s ease;
+  flex-shrink: 0;
+}
+
+.open  { width: 200px; }
+.closed { width: 52px; }
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  min-height: 56px;
+}
+
+.logo {
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.toggle {
+  color: var(--text2);
+  font-size: 1rem;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+.toggle:hover { color: var(--text1); background: var(--bg3); }
+
+.nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.5rem 0.4rem;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.6rem;
+  border-radius: var(--radius-sm);
+  color: var(--text2);
+  font-size: 0.875rem;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.navItem:hover { background: var(--bg3); color: var(--text1); }
+.navItem.active { background: var(--bg3); color: var(--accent); font-weight: 600; }
+
+.icon {
+  font-size: 0.8rem;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text3);
+}
+.navItem.active .icon { color: var(--accent); }
+
+.footer {
+  padding: 0.75rem 0.5rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.userInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 0.25rem;
+  overflow: hidden;
+}
+
+.userName {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userRole {
+  font-size: 0.7rem;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+
+.logoutBtn {
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-sm);
+  color: var(--red);
+  font-size: 0.8rem;
+  text-align: left;
+  font-family: 'JetBrains Mono', monospace;
+}
+.logoutBtn:hover { background: var(--bg3); }

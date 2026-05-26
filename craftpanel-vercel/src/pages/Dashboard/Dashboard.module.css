@@ -1,0 +1,124 @@
+.page { display: flex; flex-direction: column; gap: 1.5rem; max-width: 1100px; }
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.heading { font-size: 1.4rem; font-weight: 700; }
+.welcome { font-size: 0.85rem; color: var(--text2); margin-top: 2px; }
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.statCard {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.statOnline  { border-color: rgba(74,222,128,0.25); }
+.statPlayers { border-color: rgba(79,142,247,0.25); }
+
+.statLabel { font-size: 0.75rem; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+.statValue { font-size: 2rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+
+.statOnline  .statValue { color: var(--green); }
+.statPlayers .statValue { color: var(--blue); }
+
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.panel {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.panelHeader h2 { font-size: 0.9rem; font-weight: 600; }
+.viewAll { font-size: 0.75rem; color: var(--accent); }
+.viewAll:hover { color: var(--accent-hover); }
+
+.serverList { display: flex; flex-direction: column; }
+.serverRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.serverRow:last-child { border-bottom: none; }
+.serverRow:hover { background: var(--bg2); }
+
+.serverName { font-size: 0.875rem; font-weight: 500; }
+.serverMeta { display: flex; align-items: center; gap: 0.75rem; font-size: 0.75rem; color: var(--text2); }
+.players { color: var(--blue); }
+.mono { font-family: 'JetBrains Mono', monospace; }
+
+.activityList { display: flex; flex-direction: column; }
+.activityRow {
+  padding: 0.7rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.activityRow:last-child { border-bottom: none; }
+.actAction { font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; color: var(--cyan); }
+.actDetail { font-size: 0.8rem; color: var(--text1); }
+.actMeta { display: flex; gap: 0.75rem; font-size: 0.7rem; color: var(--text3); }
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 4rem;
+  color: var(--text2);
+}
+
+.spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--bg4);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loadingInline { padding: 1rem 1.25rem; color: var(--text3); font-size: 0.85rem; }
+
+.error {
+  background: rgba(248,113,113,0.1);
+  border: 1px solid rgba(248,113,113,0.3);
+  border-radius: var(--radius);
+  color: var(--red);
+  padding: 1rem 1.25rem;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 900px) {
+  .statsGrid { grid-template-columns: repeat(2, 1fr); }
+  .panels { grid-template-columns: 1fr; }
+}

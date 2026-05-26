@@ -1,0 +1,158 @@
+.page { display: flex; flex-direction: column; gap: 1.25rem; max-width: 1000px; }
+
+.back {
+  color: var(--text2);
+  font-size: 0.8rem;
+  width: fit-content;
+  padding: 0.3rem 0;
+}
+.back:hover { color: var(--accent); }
+
+.serverHeader {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.name { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.4rem; }
+.meta { display: flex; gap: 1rem; font-size: 0.8rem; color: var(--text2); }
+.mono { font-family: 'JetBrains Mono', monospace; }
+.statusGroup { display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; }
+.players { font-size: 0.75rem; color: var(--blue); font-family: 'JetBrains Mono', monospace; }
+
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.875rem;
+  color: var(--text2);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s;
+}
+.tab:hover { color: var(--text1); }
+.activeTab { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+.panel {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text2);
+}
+
+.addBtn {
+  padding: 0.35rem 0.8rem;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.addBtn:hover { background: var(--accent-hover); }
+
+.newFileForm {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.newFileForm textarea { resize: vertical; min-height: 80px; }
+
+.saveBtn {
+  align-self: flex-end;
+  padding: 0.4rem 0.9rem;
+  background: var(--green);
+  color: #0a1a0a;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.saveBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.fileTable { width: 100%; border-collapse: collapse; }
+.fileTable thead tr { border-bottom: 1px solid var(--border2); }
+.fileTable th {
+  padding: 0.6rem 1rem;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fileRow { border-bottom: 1px solid var(--border); }
+.fileRow:last-child { border-bottom: none; }
+.fileRow:hover { background: var(--bg2); }
+.fileRow td { padding: 0.6rem 1rem; font-size: 0.8rem; }
+.fileName { color: var(--text1); }
+.fileType { font-size: 0.7rem !important; color: var(--text3); }
+
+.deleteFileBtn {
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  background: rgba(248,113,113,0.1);
+  color: var(--red);
+}
+.deleteFileBtn:hover { background: rgba(248,113,113,0.2); }
+
+.actList { display: flex; flex-direction: column; }
+.actRow {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.7rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.actRow:last-child { border-bottom: none; }
+.actAction { font-size: 0.75rem; color: var(--cyan); }
+.actDetail { font-size: 0.85rem; }
+.actMeta { font-size: 0.7rem; color: var(--text3); }
+
+.empty { padding: 1.5rem 1.25rem; color: var(--text3); font-size: 0.85rem; }
+.loadingInline { padding: 1rem 1.25rem; color: var(--text3); font-size: 0.85rem; }
+
+.loading {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 1rem; padding: 4rem; color: var(--text2);
+}
+.spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--bg4);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.error {
+  background: rgba(248,113,113,0.1);
+  border: 1px solid rgba(248,113,113,0.3);
+  border-radius: var(--radius);
+  color: var(--red);
+  padding: 1.5rem;
+  display: flex; flex-direction: column; gap: 0.75rem;
+}
+.error button { color: var(--accent); font-size: 0.8rem; width: fit-content; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
