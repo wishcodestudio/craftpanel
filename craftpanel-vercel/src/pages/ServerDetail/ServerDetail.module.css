@@ -1,6 +1,6 @@
 .page { display: flex; flex-direction: column; gap: 1rem; max-width: 1100px; }
 
-.back { color: var(--text2); font-size: 0.8rem; width: fit-content; padding: 0.3rem 0; }
+.back { color: var(--text2); font-size: 0.8rem; width: fit-content; padding: 0.45rem 0; }
 .back:hover { color: var(--accent); }
 
 .serverCard {
@@ -28,7 +28,10 @@
 .tabs {
   display: flex; gap: 0; border-bottom: 1px solid var(--border);
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.tabs::-webkit-scrollbar { display: none; }
 .tab {
   padding: 0.6rem 1.1rem; font-size: 0.85rem; color: var(--text2);
   border-bottom: 2px solid transparent; margin-bottom: -1px;
@@ -200,8 +203,43 @@
 .deleteConfirmBtn { padding: 0.45rem 0.9rem; border-radius: var(--radius-sm); background: var(--red); color: #fff; font-size: 0.875rem; font-weight: 600; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (max-width: 900px) {
+
+@media (max-width: 1024px) {
   .overviewGrid { grid-template-columns: repeat(2, 1fr); }
   .wideCard { grid-column: span 2; }
   .offlineCard { grid-column: span 2; }
+  .fileTable, .playerTable, .backupTable { min-width: 480px; }
+  .panel { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
+@media (max-width: 640px) {
+  .page { gap: 0.75rem; }
+
+  .serverCard { flex-direction: column; align-items: flex-start; gap: 0.875rem; padding: 1rem; }
+  .controls { align-items: flex-start; flex-direction: row; flex-wrap: wrap; width: 100%; }
+  .btns { flex-wrap: wrap; }
+  .name { font-size: 1.05rem; }
+  .meta { flex-wrap: wrap; gap: 0.5rem; }
+
+  .tabs { gap: 0; }
+  .tab { padding: 0.55rem 0.75rem; font-size: 0.78rem; }
+
+  .overviewGrid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .wideCard { grid-column: span 2; }
+  .offlineCard { grid-column: span 2; }
+  .statValue { font-size: 1.25rem; }
+
+  /* Console panel — full width, taller */
+  .panel { border-radius: var(--radius-sm); }
+
+  /* File/player/backup tables — horizontal scroll */
+  .fileTable, .playerTable, .backupTable { min-width: 480px; }
+  .panel:has(.fileTable),
+  .panel:has(.playerTable),
+  .panel:has(.backupTable) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Activity list — tighter */
+  .actRow { padding: 0.55rem 1rem; }
+
+  .startBtn, .stopBtn, .restartBtn { min-width: 60px; font-size: 0.75rem; padding: 0.35rem 0.7rem; }
 }

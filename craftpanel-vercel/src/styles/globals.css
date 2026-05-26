@@ -21,6 +21,22 @@
   --accent-hover: #6ea8ff;
   --radius: 8px;
   --radius-sm: 4px;
+
+  /* Sidebar widths */
+  --sidebar-full: 210px;
+  --sidebar-mini: 52px;
+  --bottomnav-h: 64px;
+
+  /* Responsive spacing */
+  --page-px: 2rem;
+  --page-py: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  :root { --page-px: 1.25rem; --page-py: 1.25rem; }
+}
+@media (max-width: 640px) {
+  :root { --page-px: 0.875rem; --page-py: 1rem; }
 }
 
 html, body, #root {
@@ -30,6 +46,7 @@ html, body, #root {
   color: var(--text1);
   font-size: 14px;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
 a { color: inherit; text-decoration: none; }
@@ -41,6 +58,7 @@ button {
   font-family: inherit;
   font-size: inherit;
   color: inherit;
+  -webkit-tap-highlight-color: transparent;
 }
 
 input, select, textarea {
@@ -56,12 +74,30 @@ input, select, textarea {
   transition: border-color 0.15s;
 }
 
-input:focus, select:focus, textarea:focus {
-  border-color: var(--accent);
-}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
 
 .mono { font-family: 'JetBrains Mono', monospace; }
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--bg1); }
+/* Shared spinner */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border2); }
+
+/* iPhone notch / home-bar safe areas */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  :root { --safe-bottom: env(safe-area-inset-bottom, 0px); }
+}
+
+@media (max-width: 640px) {
+  /* Larger tap targets on touch screens */
+  button, a, [role="button"] { min-height: 36px; }
+
+  /* Smooth momentum scroll inside panels */
+  .overflowScroll { -webkit-overflow-scrolling: touch; }
+
+  /* Hide scrollbars on mobile (keep scrollable, cleaner look) */
+  ::-webkit-scrollbar { width: 0; height: 0; }
+}

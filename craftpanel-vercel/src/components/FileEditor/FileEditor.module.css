@@ -68,3 +68,9 @@
   color: var(--text3);
 }
 .error { color: var(--red); }
+
+@media (max-width: 640px) {
+  .header { padding: 0.5rem 1rem; flex-wrap: wrap; gap: 0.4rem; }
+  .textarea { min-height: 200px; font-size: 0.72rem; }
+  .actions { flex-wrap: wrap; }
+}

@@ -7,6 +7,12 @@
 .main {
   flex: 1;
   overflow-y: auto;
-  padding: 1.5rem 2rem;
+  padding: var(--page-py) var(--page-px);
   min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .main {
+    padding-bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0px) + var(--page-py));
+  }
 }

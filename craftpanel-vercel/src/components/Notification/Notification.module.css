@@ -20,3 +20,14 @@
   from { transform: translateY(16px); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
+
+@media (max-width: 640px) {
+  .notification {
+    bottom: calc(var(--bottomnav-h) + 0.75rem);
+    right: 0.875rem;
+    left: 0.875rem;
+    max-width: 100%;
+    font-size: 0.825rem;
+    padding: 0.65rem 1rem;
+  }
+}

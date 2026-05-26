@@ -1,3 +1,4 @@
+import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
@@ -14,23 +15,37 @@ const NAV = [
   { to: '/users',     label: 'Users',     tag: '[U]' },
 ] as const;
 
+function useIsMobile() {
+  const [mobile, setMobile] = React.useState(() => window.innerWidth <= 640);
+  React.useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    const handler = (e: MediaQueryListEvent) => setMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return mobile;
+}
+
 export default function Sidebar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useAppSelector(selectCurrentUser);
   const open = useAppSelector(selectSidebarOpen);
   const stats = useAppSelector(selectServerStats);
+  const isMobile = useIsMobile();
 
   return (
     <aside className={`${styles.sidebar} ${open ? styles.open : styles.closed}`}>
-      <div className={styles.header}>
-        {open && <span className={styles.logo}>CraftPanel</span>}
-        <button className={styles.toggle} onClick={() => dispatch(toggleSidebar())} aria-label="Toggle sidebar">
-          {open ? '«' : '»'}
-        </button>
-      </div>
+      {!isMobile && (
+        <div className={styles.header}>
+          {open && <span className={styles.logo}>CraftPanel</span>}
+          <button className={styles.toggle} onClick={() => dispatch(toggleSidebar())} aria-label="Toggle sidebar">
+            {open ? '«' : '»'}
+          </button>
+        </div>
+      )}
 
-      {open && (
+      {!isMobile && open && (
         <div className={styles.statsRow}>
           <span className={styles.onlineDot} />
           <span className={styles.statsText}>{stats.online}/{stats.total} online · {stats.totalPlayers} players</span>
@@ -43,29 +58,41 @@ export default function Sidebar() {
             key={to}
             to={to}
             className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''} ${to === '/ai' ? styles.aiItem : ''}`}
-            title={open ? undefined : label}
+            title={!isMobile && !open ? label : undefined}
           >
             <span className={styles.icon}>{tag}</span>
-            {open && <span>{label}</span>}
+            {(open || isMobile) && <span>{label}</span>}
           </NavLink>
         ))}
+        {isMobile && (
+          <button
+            className={`${styles.navItem}`}
+            onClick={() => { dispatch(logout()); navigate('/login'); }}
+            aria-label="Logout"
+          >
+            <span className={styles.icon}>[x]</span>
+            <span>Logout</span>
+          </button>
+        )}
       </nav>
 
-      <div className={styles.footer}>
-        {open && user && (
-          <div className={styles.userInfo}>
-            <span className={styles.userName}>{user.name}</span>
-            <span className={styles.userRole}>{user.role}</span>
-          </div>
-        )}
-        <button
-          className={styles.logoutBtn}
-          onClick={() => { dispatch(logout()); navigate('/login'); }}
-          title="Logout"
-        >
-          {open ? 'Logout' : '[x]'}
-        </button>
-      </div>
+      {!isMobile && (
+        <div className={styles.footer}>
+          {open && user && (
+            <div className={styles.userInfo}>
+              <span className={styles.userName}>{user.name}</span>
+              <span className={styles.userRole}>{user.role}</span>
+            </div>
+          )}
+          <button
+            className={styles.logoutBtn}
+            onClick={() => { dispatch(logout()); navigate('/login'); }}
+            title="Logout"
+          >
+            {open ? 'Logout' : '[x]'}
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

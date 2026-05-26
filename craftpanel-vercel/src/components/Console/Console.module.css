@@ -72,3 +72,9 @@
 }
 .sendBtn:hover:not(:disabled) { background: var(--bg4); }
 .sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+@media (max-width: 640px) {
+  .console { height: 320px; }
+  .log { font-size: 0.68rem; }
+  .ts { display: none; }
+}

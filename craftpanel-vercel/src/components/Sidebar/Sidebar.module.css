@@ -10,6 +10,21 @@
 .open  { width: 200px; }
 .closed { width: 52px; }
 
+@media (max-width: 640px) {
+  .sidebar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    width: 100% !important;
+    height: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    flex-direction: row;
+    border-right: none;
+    border-top: 1px solid var(--border);
+    z-index: 900;
+    transition: none;
+  }
+}
+
 .header {
   display: flex;
   align-items: center;
@@ -96,6 +111,42 @@
   gap: 0.5rem;
 }
 
+@media (max-width: 640px) {
+  .header, .footer, .statsRow { display: none; }
+
+  .nav {
+    flex: 1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .navItem {
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0.4rem 0;
+    gap: 0.15rem;
+    border-radius: 0;
+    font-size: 0.6rem;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .icon {
+    font-size: 0.75rem;
+    width: auto;
+  }
+
+  .navItem.active { background: transparent; border-bottom: 2px solid var(--accent); }
+  .aiItem { border: none; border-bottom: 2px solid transparent; margin-top: 0; }
+  .aiItem.active { background: transparent !important; border-color: var(--purple); }
+}
+
 .userInfo {
   display: flex;
   flex-direction: column;
@@ -128,3 +179,12 @@
   font-family: 'JetBrains Mono', monospace;
 }
 .logoutBtn:hover { background: var(--bg3); }
+
+/* Tablet: always icon-only sidebar (52 px), toggle hidden */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .sidebar { width: 52px !important; }
+  .logo, .statsRow, .userInfo { display: none; }
+  .toggle { display: none; }
+  /* Force icon-only: hide text labels even when Redux says open */
+  .navItem > span:last-child:not(.icon) { display: none; }
+}
